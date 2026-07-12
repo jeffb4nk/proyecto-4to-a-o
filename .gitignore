@@ -1,0 +1,70 @@
+# ============================================
+# QUIZIMA - Gitignore
+# ============================================
+
+# --- Seguridad (NO SUBIR) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+
+# --- Herramientas de IA ---
+.opencode/
+AGENTS.md
+DESIGN.md
+DOCUMENTACION_FEATURE_LIMPIEZA.md
+DOCUMENTACION_OFFLINE.md
+
+# --- Python / Entornos Virtuales ---
+venv/
+env/
+ENV/
+.Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Frontend ---
+my-app/node_modules/
+my-app/metro_output.log
+
+# --- Expo / React Native ---
+.expo/
+my-app/.expo/
+my-app/dist/
+my-app/web-build/
+my-app/*.jks
+my-app/*.p8
+my-app/*.p12
+my-app/*.key
+my-app/*.mobileprovision
+my-app/*.orig.
+
+# --- Base de datos local ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Uploads de usuario ---
+backend/uploads/*.jpg
+backend/uploads/*.png
+backend/uploads/*.jpeg
+
+# --- Logs y temporales ---
+*.log
+*.tmp
+*.temp
+*_log.txt
+
+# --- Sistema / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.bak
+*~
