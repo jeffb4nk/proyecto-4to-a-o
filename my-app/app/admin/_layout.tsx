@@ -57,7 +57,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               onPress={() => {
                 // Navegar directamente a la pantalla de perfil
                 if (usuario) {
-                  router.replace({
+                  router.push({
                     pathname: '/profile',
                     params: {
                       nombre: usuario.usu_nombre,
