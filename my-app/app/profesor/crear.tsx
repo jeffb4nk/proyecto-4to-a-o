@@ -877,7 +877,7 @@ export default function CrearScreen() {
       const verificarAutenticacion = async () => {
         const usuario = await getItem('user');
         if (!usuario) {
-          router.replace('/(tabs)');
+          router.replace('/login');
           return;
         }
 

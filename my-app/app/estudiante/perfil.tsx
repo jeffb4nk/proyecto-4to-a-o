@@ -29,7 +29,7 @@ export default function EstudiantePerfilScreen() {
     React.useCallback(() => {
       // Verificar autenticación
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 

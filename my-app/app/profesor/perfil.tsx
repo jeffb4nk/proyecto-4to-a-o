@@ -34,7 +34,7 @@ export default function PerfilScreen() {
     React.useCallback(() => {
       // Verificar autenticación
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 

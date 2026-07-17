@@ -134,7 +134,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userId = userData.usu_id;
 
         // Si cambió el usuario o no hay usuario cargado, recargar
-        if (userId !== ultimoUserIdRef.current) {
+        if (userId !== ultimoUserIdRef.current && !cargandoDesdeLoginRef.current) {
           await cargarUsuario(true);
         }
       } catch (error) {

@@ -27,11 +27,11 @@ export default function UsuariosScreen() {
   useFocusEffect(
     React.useCallback(() => {
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
       if (usuarioActual.rol_nombre !== 'master') {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
       cargarUsuarios();

@@ -16,11 +16,11 @@ export default function AdminScreen() {
     React.useCallback(() => {
       // Solo entra acá quien sea master. Si no, lo mandamos a la raíz.
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
       if (usuarioActual.rol_nombre !== 'master') {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
     }, [usuarioActual])

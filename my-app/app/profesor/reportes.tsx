@@ -66,7 +66,7 @@ export default function ReportesScreen() {
       const verificarYCargar = async () => {
         const usuario = await getItem('user');
         if (!usuario) {
-          router.replace('/(tabs)');
+          router.replace('/login');
           return;
         }
         // Recargar sesiones al enfocar la pantalla

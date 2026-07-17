@@ -30,12 +30,12 @@ export default function EstudianteDashboardScreen() {
   useFocusEffect(
     React.useCallback(() => {
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 
       if (usuarioActual.rol_nombre !== 'alumno' && usuarioActual.rol_nombre !== 'master') {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 

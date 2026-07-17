@@ -71,7 +71,7 @@ export default function SesionesScreen() {
       const verificarYCargar = async () => {
         const usuario = await getItem('user');
         if (!usuario) {
-          router.replace('/(tabs)');
+          router.replace('/login');
           return;
         }
         // Recargar sesiones si el usuario ya está cargado

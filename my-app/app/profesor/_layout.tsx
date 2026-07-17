@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getInitials } from '@/utils';
 import { useUser } from '@/contexts/UserContext';
 import { AppImage } from '@/components/AppImage';
+import { useNavigation } from '@react-navigation/native';
 
 // Componente personalizado para la barra de navegación inferior
 function CustomTabBar({ state, descriptors, navigation }: any) {
@@ -128,16 +129,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 export default function ProfesorTabLayout() {
   const { usuario, loading } = useUser();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (!loading && (!usuario || (usuario.usu_fk_rol !== 2 && usuario.usu_fk_rol !== 3))) {
+    if (navigation.isFocused() && !loading && (!usuario || (usuario.usu_fk_rol !== 2 && usuario.usu_fk_rol !== 3))) {
       timeoutRef.current = setTimeout(() => {
         router.replace('/login');
       }, 200);
     }
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
-  }, [usuario, loading]);
+  }, [usuario, loading, navigation]);
 
   return (
     <Tabs

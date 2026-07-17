@@ -16,7 +16,7 @@ export default function AdminPerfilScreen() {
     if (usuario?.rol_nombre) params.append('rol', usuario.rol_nombre);
     if (usuario?.usu_imagen) params.append('imagen', usuario.usu_imagen);
     router.replace(`/profile?${params.toString()}`);
-  }, [usuario]);
+  }, []);
 
   return null;
 }

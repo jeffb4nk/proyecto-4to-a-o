@@ -22,13 +22,13 @@ export default function ProfesorDashboardScreen() {
     React.useCallback(() => {
       // Verificar autenticación
       if (!usuarioActual) {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 
       // Verificar rol
       if (usuarioActual.rol_nombre !== 'profesor' && usuarioActual.rol_nombre !== 'master') {
-        router.replace('/(tabs)');
+        router.replace('/login');
         return;
       }
 
