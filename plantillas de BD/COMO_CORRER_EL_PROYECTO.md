@@ -121,12 +121,14 @@ pip install -r aplicacion/requirements.txt
 ### 5.3 Iniciar el servidor
 
 ```powershell
-uvicorn aplicacion.main:app --reload
+python -m uvicorn aplicacion.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+> **Importante**: `--host 0.0.0.0` hace que el backend acepte conexiones desde otros dispositivos en la red. Sin esto, solo funciona en la misma computadora.
 
 ### 5.4 Verificar
 
-Abrir en el navegador: http://127.0.0.1:8000
+Abrir en el navegador: http://localhost:8000
 
 Deberias ver: `{"mensaje":"!El backend esta vivo!","status":"ok"}`
 
@@ -231,7 +233,8 @@ Proyecto-Quiz-IMA-main/
 
 ### "Expo Go no conecta"
 - Asegurate de que el celular y la computadora esten en la misma red WiFi
-- Verificar que el backend este corriendo
+- Verificar que el backend este corriendo con `--host 0.0.0.0`
+- Verificar que no hay un firewall bloqueando el puerto 8000
 
 ### "Error de puerto ocupado"
 - Matar el proceso que usa el puerto:
@@ -247,8 +250,8 @@ Proyecto-Quiz-IMA-main/
 ```powershell
 # Backend
 cd backend
-venv\Scripts\activate                    # Activar entorno virtual
-uvicorn aplicacion.main:app --reload     # Iniciar servidor
+venv\Scripts\activate                                            # Activar entorno virtual
+python -m uvicorn aplicacion.main:app --host 0.0.0.0 --port 8000 --reload # Iniciar servidor
 
 # Frontend
 cd my-app

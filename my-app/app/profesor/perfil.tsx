@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { deleteItem } from '@/utils/storage';
+
 import { Header } from '@/components/Header';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card, CardContent } from '@/components/Card';
@@ -26,7 +26,7 @@ interface Materia {
 }
 
 export default function PerfilScreen() {
-  const { usuario: usuarioActual, cargarUsuario } = useUser();
+  const { usuario: usuarioActual, cargarUsuario, cerrarSesion: cerrarSesionContext } = useUser();
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [estadisticas, setEstadisticas] = useState({ total_quizes: 0, total_materias: 0 });
 
@@ -74,8 +74,7 @@ export default function PerfilScreen() {
 
   const cerrarSesion = async () => {
     try {
-      await deleteItem('user');
-      await deleteItem('token');
+      await cerrarSesionContext();
       router.replace('/login');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);

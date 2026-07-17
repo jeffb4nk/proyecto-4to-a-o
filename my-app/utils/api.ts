@@ -15,18 +15,22 @@ const getApiBaseUrl = () => {
 
   if (configured) return configured;
 
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
-  }
-
   // En web el backend esta en localhost porque corre en la misma maquina.
   if (Platform.OS === 'web') {
     return 'http://localhost:8000';
   }
 
+  // Expo detecta automaticamente la IP de la red donde estas.
+  // Funciona en celulares reales (Expo Go) porque hostUri contiene
+  // la IP del dev server, que es la misma maquina donde corre el backend.
   if (Constants.expoConfig?.hostUri) {
     const host = Constants.expoConfig.hostUri.split(':')[0];
     return `http://${host}:8000`;
+  }
+
+  // Solo para emulador Android (10.0.2.2 es un alias especial del emulador).
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000';
   }
 
   return 'http://127.0.0.1:8000';
@@ -105,7 +109,6 @@ async function handleResponse(response: Response) {
                     if (Date.now() >= exp) {
                         await deleteItem('token');
                         await deleteItem('user');
-                        router.replace('/login');
                         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
                     }
                 } catch {
@@ -113,7 +116,6 @@ async function handleResponse(response: Response) {
                 }
                 throw new Error('Error de autenticación temporal. Intenta nuevamente.');
             }
-            router.replace('/login');
             throw new Error('Sesión no iniciada.');
         }
 

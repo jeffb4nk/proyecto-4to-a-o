@@ -33,9 +33,7 @@
       "@react-native-community/datetimepicker",
       "expo-notifications"
     ],
-    "extra": {
-      "API_BASE_URL": "http://192.168.1.2:8000"
-    },
+    "extra": {},
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": false

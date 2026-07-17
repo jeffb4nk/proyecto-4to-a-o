@@ -107,10 +107,10 @@ Abre una terminal (PowerShell o cmd) y ejecuta:
 ```powershell
 cd backend
 pip install -r aplicacion/requirements.txt
-uvicorn aplicacion.servidor:app --reload
+python -m uvicorn aplicacion.servidor:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Si ves algo como `Uvicorn running on http://127.0.0.1:8000`, todo esta funcionando.
+Si ves algo como `Uvicorn running on http://0.0.0.0:8000`, todo esta funcionando.
 
 ---
 

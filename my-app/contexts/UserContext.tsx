@@ -24,6 +24,7 @@ interface UserContextType {
   usuario: Usuario | null;
   loading: boolean;
   cargarUsuario: (force?: boolean) => Promise<void>;
+  cargarUsuarioLogin: () => Promise<void>;
   actualizarUsuario: (nuevosDatos: Partial<Usuario>) => void;
   cerrarSesion: () => Promise<void>;
 }
@@ -34,9 +35,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const ultimoUserIdRef = useRef<number | null>(null);
+  const cargandoDesdeLoginRef = useRef(false);
 
   const cargarUsuario = useCallback(async (force = false) => {
     try {
+      if (!force && cargandoDesdeLoginRef.current) return;
       setLoading(true);
         const userJson = await getItem('user');
       
@@ -88,6 +91,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const cargarUsuarioLogin = useCallback(async () => {
+    cargandoDesdeLoginRef.current = true;
+    try {
+      await cargarUsuario(true);
+    } finally {
+      cargandoDesdeLoginRef.current = false;
+    }
+  }, [cargarUsuario]);
+
   const actualizarUsuario = (nuevosDatos: Partial<Usuario>) => {
     setUsuario(prev => prev ? { ...prev, ...nuevosDatos } : null);
   };
@@ -99,7 +111,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     ultimoUserIdRef.current = null;
   };
 
-  // Detectar cambios en SecureStore cada 2 segundos
+  // Detectar cambios en SecureStore cada 5 segundos
   // Esto permite que cuando el usuario se loguea desde otra
   // pantalla (login), el contexto se entere del nuevo usuario
   // sin necesidad de recargar la app manualmente.
@@ -127,13 +139,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
       }
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [cargarUsuario]);
 
   return (
-    <UserContext.Provider value={{ usuario, loading, cargarUsuario, actualizarUsuario, cerrarSesion }}>
+    <UserContext.Provider value={{ usuario, loading, cargarUsuario, cargarUsuarioLogin, actualizarUsuario, cerrarSesion }}>
       {children}
     </UserContext.Provider>
   );

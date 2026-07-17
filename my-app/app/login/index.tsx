@@ -13,7 +13,7 @@ import Colors from '@/constants/colors';
 import { useUser } from '@/contexts/UserContext';
 
 export default function LoginScreen() {
-  const { cargarUsuario } = useUser();
+  const { cargarUsuarioLogin } = useUser();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -158,7 +158,7 @@ export default function LoginScreen() {
           JSON.stringify({ usu_id: data.usuario.usu_id, rol_nombre: data.usuario.rol_nombre })
         );
 
-        await cargarUsuario();
+        await cargarUsuarioLogin();
         router.replace(registerRole === 'profesor' ? '/profesor' as any : '/estudiante' as any);
       } catch (error: any) {
         setErrorMsg(error.message || 'Error en el registro');
@@ -196,7 +196,7 @@ export default function LoginScreen() {
           JSON.stringify({ usu_id: data.usuario.usu_id, rol_nombre: data.usuario.rol_nombre })
         );
 
-        await cargarUsuario();
+        await cargarUsuarioLogin();
 
         if (data.usuario.usu_fk_rol === 3) {
           router.replace('/admin' as any);

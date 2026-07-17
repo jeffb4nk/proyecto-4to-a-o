@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { deleteItem } from '@/utils/storage';
+
 import { Header } from '@/components/Header';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card, CardContent } from '@/components/Card';
@@ -18,7 +18,7 @@ import { obtenerEstadisticasEstudiante } from '@/utils/api';
 import { AppImage } from '@/components/AppImage';
 
 export default function EstudiantePerfilScreen() {
-  const { usuario: usuarioActual, cargarUsuario } = useUser();
+  const { usuario: usuarioActual, cargarUsuario, cerrarSesion: cerrarSesionContext } = useUser();
   const [estadisticas, setEstadisticas] = useState({ 
     quices_completados: 0, 
     promedio_nota: 0,
@@ -61,12 +61,9 @@ export default function EstudiantePerfilScreen() {
     }
   };
 
-  // Limpia todo lo guardado en el telefono y manda al usuario a la pantalla
-  // de login. No dejamos rastro de la sesion anterior.
   const cerrarSesion = async () => {
     try {
-      await deleteItem('user');
-      await deleteItem('token');
+      await cerrarSesionContext();
       router.replace('/login');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
