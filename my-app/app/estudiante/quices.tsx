@@ -119,26 +119,31 @@ export default function EstudianteQuicesScreen() {
 
       // Limpiamos los quizzes offline que ya no existen en el backend.
       // Si no hay internet, no borramos nada para no perder los datos.
-      let apiReachable = false;
-      const disponiblesIds = disponibles.map((d: any) => d.ses_id);
+      // Solo limpiamos si AMBAS llamadas tuvieron exito (si una falla,
+      // la lista esta incompleta y borraríamos quizzes válidos).
+      let pendientesOk = false;
+      let disponiblesOk = false;
+      const disponiblesIds = disponibles.map((d: any) => d.sesion_id);
       let pendientesIds: number[] = [];
 
       try {
         const pendData = await obtenerSesionesPendientes(usuario.usu_id);
         pendientesIds = (pendData.pendientes || []).map((p: any) => p.sesion_id);
-        apiReachable = true;
+        pendientesOk = true;
       } catch (e) {
       }
 
-      if (!apiReachable) {
+      if (!pendientesOk) {
         try {
           await obtenerSesionesDisponibles(usuario.usu_id);
-          apiReachable = true;
+          disponiblesOk = true;
         } catch (e) {
         }
+      } else {
+        disponiblesOk = true;
       }
 
-      if (apiReachable) {
+      if (pendientesOk && disponiblesOk) {
         const backendIds = [...new Set([...disponiblesIds, ...pendientesIds])];
         await limpiarQuizzesHuerfanos(backendIds);
       }
@@ -204,7 +209,7 @@ export default function EstudianteQuicesScreen() {
   // lista. Filtramos los que ya se completaron localmente para no mostrarlos dos veces.
   const quicesPorPresentar = [
     ...quicesDisponibles.map(d => ({
-      id: d.ses_id,
+      id: d.sesion_id,
       quizId: d.ses_id_mongo_quiz,
       titulo: d.quiz_titulo,
       fecha: d.ses_fecha_inicio,
@@ -223,7 +228,7 @@ export default function EstudianteQuicesScreen() {
         status: 'pendiente'
       })),
     ...quizzesOffline.filter(qOff => 
-      !quicesDisponibles.some(d => d.ses_id === qOff.sesion_id) &&
+      !quicesDisponibles.some(d => d.sesion_id === qOff.sesion_id) &&
       !pendientes.some(p => p.sesion_id === qOff.sesion_id)
     ).map(qOff => ({
       id: qOff.sesion_id,

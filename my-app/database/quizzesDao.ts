@@ -24,7 +24,12 @@ export interface QuizDescargado {
 const PREFIX = 'offline_quiz_';
 
 // Almacena el quiz en el dispositivo para usarlo sin internet
+// No sobrescribe si ya fue completado localmente (defensa ante re-descarga)
 export async function guardarQuizDescargado(data: QuizDescargado): Promise<void> {
+  const existente = await obtenerQuizDescargado(data.sesion_id);
+  if (existente && existente.estado === 'completado') {
+    return;
+  }
   await AsyncStorage.setItem(PREFIX + data.sesion_id, JSON.stringify(data));
 }
 
@@ -121,16 +126,17 @@ export async function limpiarQuizzesViejos(dias: number = 7): Promise<void> {
 }
 
 // Cuando se borra una sesion del servidor, tambien se borra su copia local
-export async function limpiarQuizzesHuerfanos(sessionIdsValidos: number[]): Promise<number> {
+export async function limpiarQuizzesHuerfanos(sessionIdsValidos: (number | string)[]): Promise<number> {
   const allKeys = await AsyncStorage.getAllKeys();
   const quizKeys = allKeys.filter(key => key.startsWith(PREFIX));
   let eliminados = 0;
+  const idsValidos = new Set(sessionIdsValidos.map(id => Number(id)));
   
   for (const key of quizKeys) {
     const res = await AsyncStorage.getItem(key);
     if (res) {
       const quiz = JSON.parse(res);
-      if (!sessionIdsValidos.includes(quiz.sesion_id)) {
+      if (!idsValidos.has(Number(quiz.sesion_id))) {
         await AsyncStorage.removeItem(key);
         eliminados++;
         console.log('🧹 [quizzesDao] Quiz huérfano eliminado, sesion_id:', quiz.sesion_id);

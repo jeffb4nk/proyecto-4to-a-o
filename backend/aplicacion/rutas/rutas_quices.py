@@ -201,6 +201,18 @@ async def descargar_quiz_offline(
             detail="Esta sesión ya expiró"
         )
     
+    # 3b. Verificar que no tenga resultado ya registrado (primera nota permanente)
+    resultado_existente = db.query(modelos.Resultado).filter(
+        modelos.Resultado.res_fk_usuario == usuario_actual["user_id"],
+        modelos.Resultado.res_fk_sesion == sesion.ses_id
+    ).first()
+
+    if resultado_existente and resultado_existente.res_hora_final_real is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Ya completaste este quiz. La primera nota es permanente."
+        )
+    
     # 4. Obtener quiz completo de MongoDB
     try:
         obj_id = ObjectId(sesion.ses_id_mongo_quiz)

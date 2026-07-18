@@ -157,6 +157,8 @@ export default function LoginScreen() {
           'user',
           JSON.stringify({ usu_id: data.usuario.usu_id, rol_nombre: data.usuario.rol_nombre })
         );
+        await setItem('email', email.trim().toLowerCase());
+        await setItem('password', password);
 
         await cargarUsuarioLogin();
         router.replace(registerRole === 'profesor' ? '/profesor' as any : '/estudiante' as any);
@@ -195,6 +197,8 @@ export default function LoginScreen() {
           'user',
           JSON.stringify({ usu_id: data.usuario.usu_id, rol_nombre: data.usuario.rol_nombre })
         );
+        await setItem('email', email.trim().toLowerCase());
+        await setItem('password', password);
 
         await cargarUsuarioLogin();
 

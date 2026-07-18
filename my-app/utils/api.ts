@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { getItem, deleteItem } from '@/utils/storage';
+import { getItem, setItem, deleteItem } from '@/utils/storage';
 import { getDeviceId } from '@/utils/dispositivo';
 import { Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
@@ -67,6 +67,30 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 
+// Intenta renovar el token automaticamente con las credenciales guardadas.
+// Si funciona, guarda el nuevo token y retorna true.
+// Si falla (credenciales cambiadas, usuario eliminado, etc), retorna false.
+export async function reautenticar(): Promise<boolean> {
+  try {
+    const email = await getItem('email');
+    const password = await getItem('password');
+    if (!email || !password) return false;
+
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) return false;
+    const data = await response.json();
+    await setItem('token', data.token_acceso);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Antes de cualquier peticion al backend revisamos si hay internet.
 // Si no hay, devolvemos una respuesta falsa que el resto del codigo
 // interpreta como OFFLINE_MODE. Asi evitamos que las peticiones
@@ -98,9 +122,15 @@ async function handleResponse(response: Response) {
     
     if (!response.ok) {
         if (response.status === 401) {
-            // 401 puede ser token expirado o un error pasajero.
-            // Revisamos el payload del token para ver si de verdad
-            // expiro antes de mandar al usuario al login de nuevo.
+            // Intentar renovar token automaticamente antes de cerrar sesion.
+            // Esto cubre tanto token expirado como servidor reiniciado con
+            // nueva clave secreta. Si funciona, la proxima llamada usara
+            // el token fresco y el usuario ni se entera.
+            const renovado = await reautenticar();
+            if (renovado) {
+                throw new Error('OFFLINE_MODE');
+            }
+            // No se pudo renovar: verificar si el token expiro de verdad
             const token = await getToken();
             if (token) {
                 try {
@@ -108,7 +138,9 @@ async function handleResponse(response: Response) {
                     const exp = payload.exp * 1000;
                     if (Date.now() >= exp) {
                         await deleteItem('token');
-                        await deleteItem('user');
+                        // NO borramos 'user' — el usuario sigue en la app
+                        // con datos cacheados. Solo se le pide login al
+                        // intentar algo que requiera auth nuevo.
                         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
                     }
                 } catch {

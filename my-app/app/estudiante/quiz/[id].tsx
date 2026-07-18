@@ -280,12 +280,20 @@ export default function QuizScreen() {
         </Card>
 
         {esRepeticion && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 16, marginHorizontal: 16 }}>
-            <Ionicons name="refresh-circle" size={20} color="#2E7D32" style={{ marginRight: 8 }} />
-            <Text style={{ color: '#1B5E20', fontSize: 13, flex: 1, lineHeight: 18 }}>
-              Ya presentaste este quiz (nota: {notaAnterior || 'N/A'}). Puedes repetirlo para practicar, tu nota original se conserva.
-            </Text>
-          </View>
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 10, padding: 12, marginBottom: 8, marginHorizontal: 16 }}>
+              <Ionicons name="refresh-circle" size={20} color="#2E7D32" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#1B5E20', fontSize: 13, flex: 1, lineHeight: 18 }}>
+                Ya presentaste este quiz (nota: {notaAnterior || 'N/A'}). Puedes repetirlo para practicar (solo online), tu nota original se conserva.
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF8E1', borderRadius: 10, padding: 10, marginBottom: 16, marginHorizontal: 16 }}>
+              <Ionicons name="cloud-offline-outline" size={18} color="#F57F17" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#795548', fontSize: 12, flex: 1, lineHeight: 16 }}>
+                No disponible para modo offline porque ya lo completaste.
+              </Text>
+            </View>
+          </>
         )}
         {/* Botón de Comenzar */}
             {startTimeError && (

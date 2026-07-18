@@ -46,8 +46,8 @@ def hashear_password(password):
 # Crea el token JWT que el frontend usara para autenticarse
 # Le ponemos el id del usuario y el rol dentro del token
 def crear_token(datos: dict):
-    # Expira en 1 día
-    expira = datetime.utcnow() + timedelta(days=30)
+    # Expira en 1 año (cubre todo el año escolar sin pedir re-login)
+    expira = datetime.utcnow() + timedelta(days=365)
     to_encode = datos.copy()
     to_encode.update({"exp": expira})
     return jwt.encode(to_encode, CLAVE_SECRETA, algorithm=ALGORITMO)

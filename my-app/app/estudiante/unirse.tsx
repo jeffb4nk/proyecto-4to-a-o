@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/Card';
 import Colors from '@/constants/colors';
 import { Usuario } from '@/types/user';
 import { Ionicons } from '@expo/vector-icons';
-import { unirseSesion, API_URL, getAuthHeaders } from '@/utils/api';
+import { unirseSesion, API_URL, getAuthHeaders, reautenticar } from '@/utils/api';
 import { getDeviceId } from '@/utils/dispositivo';
 import { programarNotificaciones } from '@/utils/notificaciones';
 import { guardarQuizDescargado } from '@/database/quizzesDao';
@@ -75,7 +75,7 @@ export default function UnirseSesionScreen() {
         setDescargaOffline(false);
         try {
           const headers = await getAuthHeaders();
-          const response = await fetch(`${API_URL}/sesiones/descarga-offline`, {
+          let response = await fetch(`${API_URL}/sesiones/descarga-offline`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -83,6 +83,22 @@ export default function UnirseSesionScreen() {
             },
             body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
           });
+
+          // Si el token falló, reintentar con token nuevo
+          if (response.status === 401) {
+            const renovado = await reautenticar();
+            if (renovado) {
+              const newHeaders = await getAuthHeaders();
+              response = await fetch(`${API_URL}/sesiones/descarga-offline`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...newHeaders,
+                },
+                body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+              });
+            }
+          }
 
             if (response.ok) {
             const quizData = await response.json();
@@ -133,43 +149,63 @@ export default function UnirseSesionScreen() {
       }
 
       // Guardamos el quiz localmente por si el estudiante pierde conexion despues
+      // Solo descargamos si es primera vez; si ya completo, no sobrescribimos
       let descargaExitosa = false;
-      try {
-        const headers = await getAuthHeaders();
-        const downloadResponse = await fetch(`${API_URL}/sesiones/descarga-offline`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...headers,
-          },
-          body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
-        });
-        if (downloadResponse.ok) {
-          const quizData = await downloadResponse.json();
-
-          const quizObj = JSON.parse(JSON.stringify(quizData.quiz_completo));
-          const quizConImagenes = await descargarImagenesQuiz(quizObj, quizData.sesion_id);
-
-          await guardarQuizDescargado({
-            sesion_id: quizData.sesion_id,
-            quiz_id: quizData.quiz_id,
-            codigo_acceso: codigoAcceso.toUpperCase(),
-            quiz_json: JSON.stringify(quizConImagenes),
-            titulo: quizData.titulo,
-            materia_nombre: quizData.materia_nombre || null,
-            modo_juego: quizData.modo_juego,
-            escala_puntuacion: quizData.escala_puntuacion,
-            fecha_inicio: quizData.fecha_inicio,
-            fecha_fin: quizData.fecha_fin,
-            total_preguntas: quizData.total_preguntas,
-            token_descarga: quizData.token_descarga,
-            descargado_en: quizData.descargado_en,
-            estado: 'pendiente',
-            sincronizado_en: null,
+      if (!resultado.ya_completado) {
+        try {
+          const headers = await getAuthHeaders();
+          let downloadResponse = await fetch(`${API_URL}/sesiones/descarga-offline`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+            body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
           });
-          descargaExitosa = true;
+
+          // Si el token falló, reintentar con token nuevo
+          if (downloadResponse.status === 401) {
+            const renovado = await reautenticar();
+            if (renovado) {
+              const newHeaders = await getAuthHeaders();
+              downloadResponse = await fetch(`${API_URL}/sesiones/descarga-offline`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...newHeaders,
+                },
+                body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+              });
+            }
+          }
+
+          if (downloadResponse.ok) {
+            const quizData = await downloadResponse.json();
+
+            const quizObj = JSON.parse(JSON.stringify(quizData.quiz_completo));
+            const quizConImagenes = await descargarImagenesQuiz(quizObj, quizData.sesion_id);
+
+            await guardarQuizDescargado({
+              sesion_id: quizData.sesion_id,
+              quiz_id: quizData.quiz_id,
+              codigo_acceso: codigoAcceso.toUpperCase(),
+              quiz_json: JSON.stringify(quizConImagenes),
+              titulo: quizData.titulo,
+              materia_nombre: quizData.materia_nombre || null,
+              modo_juego: quizData.modo_juego,
+              escala_puntuacion: quizData.escala_puntuacion,
+              fecha_inicio: quizData.fecha_inicio,
+              fecha_fin: quizData.fecha_fin,
+              total_preguntas: quizData.total_preguntas,
+              token_descarga: quizData.token_descarga,
+              descargado_en: quizData.descargado_en,
+              estado: 'pendiente',
+              sincronizado_en: null,
+            });
+            descargaExitosa = true;
+          }
+        } catch (e) {
         }
-      } catch (e) {
       }
 
       // Redirigir directamente al quiz

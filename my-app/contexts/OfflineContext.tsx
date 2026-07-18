@@ -7,7 +7,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL, getAuthHeaders } from '@/utils/api';
+import { API_URL, getAuthHeaders, reautenticar } from '@/utils/api';
 import { getItem, setItem } from '@/utils/storage';
 
 interface ResultadoPendiente {
@@ -156,26 +156,22 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     // ★ Validar token JWT localmente antes de intentar sync
-    // Si el token ya expiró, marcar los pendientes como sincronizados
-    // (aunque no se enviaron) para no quedarnos con resultados colgados
-    // que nunca se podrán enviar. El usuario tendrá que iniciar sesión
-    // de nuevo y los resultados viejos se pierden.
+    // Si el token expiró, intentamos renovarlo automáticamente con las
+    // credenciales guardadas. Si falla la renovación, conservamos los
+    // pendientes para que no se pierdan y limpiamos la sesión.
     try {
       const tk = await getItem('token');
       if (tk) {
         const payload = JSON.parse(atob(tk.split('.')[1]));
         if (Date.now() >= payload.exp * 1000) {
-          // Token expirado: marcar todos los pendientes como terminal y salir
-          console.warn('[Sync] Token expirado. Marcando pendientes como no reintentables.');
-          try {
-            const { obtenerResultadosPendientes, marcarSincronizado } = await import('@/database/resultadosDao');
-            const expirados = await obtenerResultadosPendientes();
-            for (const p of expirados) {
-              await marcarSincronizado(p.sesion_id);
-            }
-          } catch (e) {}
-          setResultadosPendientes([]);
-          return;
+          console.warn('[Sync] Token expirado. Intentando renovar...');
+          const renovado = await reautenticar();
+          if (renovado) {
+            console.log('[Sync] Token renovado exitosamente. Continuando sync...');
+          } else {
+            console.warn('[Sync] No se pudo renovar token. Conservando pendientes.');
+            return;
+          }
         }
       }
     } catch (e) {
