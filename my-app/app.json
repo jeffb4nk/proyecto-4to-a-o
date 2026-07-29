@@ -34,6 +34,7 @@
       "expo-notifications"
     ],
     "extra": {
+      "API_BASE_URL": "https://proyecto-4to-a-o-production.up.railway.app",
       "router": {},
       "eas": {
         "projectId": "5656db98-570e-40e4-b357-9708e4e29a06"
