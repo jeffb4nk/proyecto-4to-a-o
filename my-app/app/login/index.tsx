@@ -661,6 +661,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#333',
+    placeholderTextColor: '#999',
     backgroundColor: '#fff',
     marginBottom: 12,
   },
@@ -677,6 +679,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     fontSize: 16,
+    color: '#333',
+    placeholderTextColor: '#999',
   },
   eyeButton: {
     padding: 12,
