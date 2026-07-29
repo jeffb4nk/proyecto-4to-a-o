@@ -7,7 +7,13 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test:login": "maestro test .maestro/suite-completa.yaml",
+    "test:login:validaciones": "maestro test .maestro/01-validaciones-login.yaml",
+    "test:login:admin": "maestro test .maestro/02-login-admin.yaml",
+    "test:registro": "maestro test .maestro/03-registro-estudiante.yaml",
+    "test:login:estudiante": "maestro test .maestro/04-login-estudiante.yaml",
+    "test:recuperar": "maestro test .maestro/05-recuperar-contrasena.yaml"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -1,0 +1,9 @@
+appId: com.quizima.app
+---
+# Suite completa de pruebas de login
+# Ejecutar: maestro test .maestro/suite-completa.yaml
+- runFlow: 01-validaciones-login.yaml
+- runFlow: 02-login-admin.yaml
+- runFlow: 03-registro-estudiante.yaml
+- runFlow: 04-login-estudiante.yaml
+- runFlow: 05-recuperar-contrasena.yaml

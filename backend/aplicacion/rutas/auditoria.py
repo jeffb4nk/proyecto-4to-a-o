@@ -1210,14 +1210,29 @@ async def obtener_sesiones_historial(
                 detalles = registro.get("detalles", {})
                 entidad = registro.get("entidad", {})
                 usuario = registro.get("usuario", {})
+                cambio = registro.get("cambio", {}) or {}
                 
-                if detalles.get("quiz_id"):
-                    quiz_ids.add(detalles["quiz_id"])
-                if detalles.get("materia_id"):
+                # Busqueda robusta de quiz_id: detalles -> datos_nuevos -> datos_anteriores
+                quiz_id_val = detalles.get("quiz_id")
+                if not quiz_id_val:
+                    quiz_id_val = (cambio.get("datos_nuevos") or {}).get("quiz_id")
+                if not quiz_id_val:
+                    quiz_id_val = (cambio.get("datos_anteriores") or {}).get("quiz_id")
+                if quiz_id_val:
+                    quiz_ids.add(quiz_id_val)
+                
+                # Busqueda robusta de materia_id: detalles -> datos_nuevos -> datos_anteriores
+                materia_id_val = detalles.get("materia_id")
+                if not materia_id_val:
+                    materia_id_val = (cambio.get("datos_nuevos") or {}).get("materia_id")
+                if not materia_id_val:
+                    materia_id_val = (cambio.get("datos_anteriores") or {}).get("materia_id")
+                if materia_id_val:
                     try:
-                        materia_ids.add(int(detalles["materia_id"]))
+                        materia_ids.add(int(materia_id_val))
                     except (ValueError, TypeError):
                         pass
+                        
                 if entidad.get("id"):
                     try:
                         session_ids.add(int(entidad["id"]))
@@ -1401,7 +1416,12 @@ async def obtener_sesiones_historial(
                     "rol": usuario_mongo.get("rol", ""),
                 })
                 
+                # Busqueda robusta de quiz_id: detalles -> datos_nuevos -> datos_anteriores
                 quiz_id = detalles.get("quiz_id", "")
+                if not quiz_id:
+                    quiz_id = (cambio.get("datos_nuevos") or {}).get("quiz_id") or ""
+                if not quiz_id:
+                    quiz_id = (cambio.get("datos_anteriores") or {}).get("quiz_id") or ""
                 quiz_info = quiz_titles.get(quiz_id, {})
                 quiz_titulo = quiz_info.get("titulo", "Quiz desconocido")
                 quiz_tema = quiz_info.get("tema", "")
@@ -1409,7 +1429,12 @@ async def obtener_sesiones_historial(
                 quiz_modo = quiz_info.get("modo_juego", "Igual")
                 quiz_cantidad_preguntas = quiz_info.get("cantidad_preguntas", 0)
                 
+                # Busqueda robusta de materia_id: detalles -> datos_nuevos -> datos_anteriores
                 materia_id_raw = detalles.get("materia_id", "")
+                if not materia_id_raw:
+                    materia_id_raw = (cambio.get("datos_nuevos") or {}).get("materia_id") or ""
+                if not materia_id_raw:
+                    materia_id_raw = (cambio.get("datos_anteriores") or {}).get("materia_id") or ""
                 try:
                     materia_id = int(materia_id_raw)
                 except (ValueError, TypeError):

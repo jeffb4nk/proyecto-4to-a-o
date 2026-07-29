@@ -458,6 +458,8 @@ async def registrar_auditoria_sesion_modificacion(
     datos_nuevos: dict,
     quiz_titulo: str = None,
     codigo_acceso: str = None,
+    quiz_id: str = None,
+    materia_id: int = None,
     ip_address: str = None,
     user_agent: str = None
 ):
@@ -475,6 +477,8 @@ async def registrar_auditoria_sesion_modificacion(
         detalles={
             "sesion_id": sesion_id,
             "quiz_titulo": quiz_titulo,
+            "quiz_id": quiz_id,
+            "materia_id": materia_id,
             "codigo_acceso": codigo_acceso,
             "accion": "Modificación de sesión de quiz"
         }

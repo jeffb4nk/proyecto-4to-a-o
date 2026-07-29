@@ -1,0 +1,77 @@
+appId: com.quizima.app
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Iniciar Sesión"
+- tapOn: "¿No tienes cuenta? Registrarse"
+- assertVisible: "Crear Cuenta"
+- assertVisible: "Estudiante"
+- assertVisible: "Profesor"
+- assertNotVisible: "Administrador"
+- assertVisible: "Registra solo como estudiante o profesor."
+- tapOn: "Siguiente"
+- assertVisible: "Por favor completa todos los campos"
+- tapOn: "Nombre"
+- inputText: "María"
+- tapOn: "Apellido"
+- inputText: "González"
+- tapOn: "Email"
+- inputText: "email-mal"
+- tapOn: "Siguiente"
+- assertVisible: "Ingresa un correo electrónico válido"
+- tapOn: "Email"
+- eraseText
+- inputText: "maria@test.com"
+- tapOn: "Contraseña"
+- inputText: "solouno"
+- tapOn: "Siguiente"
+- assertVisible: "La contraseña debe contener al menos una letra mayúscula"
+- tapOn: "Contraseña"
+- eraseText
+- inputText: "Test1234!"
+- tapOn: "Confirmar Contraseña"
+- inputText: "OtraPass1!"
+- tapOn: "Siguiente"
+- assertVisible: "Las contraseñas no coinciden"
+- tapOn: "Confirmar Contraseña"
+- eraseText
+- inputText: "Test1234!"
+- tapOn: "Email"
+- eraseText
+- inputText: "test_estudiante@quizima.com"
+- tapOn: "Siguiente"
+- assertVisible: "Preguntas de Seguridad"
+- assertVisible: "Selecciona 3 preguntas"
+- tapOn:
+    text: "Seleccionar pregunta..."
+    index: 0
+- assertVisible: "Selecciona tu pregunta 1"
+- tapOn: "¿Cuál es el nombre de tu primera mascota?"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Firulais"
+- tapOn:
+    text: "Seleccionar pregunta..."
+    index: 0
+- assertVisible: "Selecciona tu pregunta 2"
+- tapOn: "¿En qué ciudad naciste?"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Caracas"
+- tapOn:
+    text: "Seleccionar pregunta..."
+    index: 0
+- assertVisible: "Selecciona tu pregunta 3"
+- tapOn: "¿Cuál es tu color favorito?"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Azul"
+- tapOn: "Registrarse"
+- assertVisible: "Inicio"
+- assertVisible: "Quices"
+- assertVisible: "Unirse"
+- assertVisible: "Logros"
+- assertVisible: "Perfil"

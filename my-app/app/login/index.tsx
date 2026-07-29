@@ -3,17 +3,17 @@
 // El registro tiene dos pasos: primero datos personales + contraseña, luego preguntas de seguridad.
 // Valida contraseña segura en cliente antes de enviar al backend.
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Keyboard, Platform, ScrollView, ActivityIndicator, Modal, FlatList } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { setItem } from '@/utils/storage';
-import { login, register } from '@/utils/api';
+import { login, register, cacheCredentials } from '@/utils/api';
 import { getInitials, pickImage } from '@/utils';
 import Colors from '@/constants/colors';
 import { useUser } from '@/contexts/UserContext';
 
 export default function LoginScreen() {
-  const { cargarUsuarioLogin } = useUser();
+  const { usuario, loading, cargarUsuarioLogin } = useUser();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -38,6 +38,21 @@ export default function LoginScreen() {
   const [cargando, setCargando] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Si la app se reinicia (Expo hot-reload) pero el usuario ya está logueado,
+  // redirigir automáticamente al dashboard correspondiente.
+  useEffect(() => {
+    if (!loading && usuario) {
+      console.log(`[Login] Usuario ya autenticado (id=${usuario.usu_id}). Redirigiendo...`);
+      if (usuario.usu_fk_rol === 3) {
+        router.replace('/admin');
+      } else if (usuario.usu_fk_rol === 2) {
+        router.replace('/profesor');
+      } else {
+        router.replace('/estudiante');
+      }
+    }
+  }, [loading, usuario]);
 
   // Abre la galería del dispositivo para seleccionar foto de perfil.
   // La imagen se convierte a base64 y se envía al backend al registrarse.
@@ -159,6 +174,7 @@ export default function LoginScreen() {
         );
         await setItem('email', email.trim().toLowerCase());
         await setItem('password', password);
+        cacheCredentials(email.trim().toLowerCase(), password);
 
         await cargarUsuarioLogin();
         router.replace(registerRole === 'profesor' ? '/profesor' as any : '/estudiante' as any);
@@ -199,6 +215,7 @@ export default function LoginScreen() {
         );
         await setItem('email', email.trim().toLowerCase());
         await setItem('password', password);
+        cacheCredentials(email.trim().toLowerCase(), password);
 
         await cargarUsuarioLogin();
 

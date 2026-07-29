@@ -804,7 +804,9 @@ export default function QuizPlayScreen() {
     // Cancelar notificaciones pendientes de esta sesión
     cancelarNotificaciones(Number(sesionId));
     // Primero guardar resultado, luego esperar y cargar ranking
-    await guardarResultado(nota, puntosGanados);
+    console.log('[Play] Guardando resultado del quiz...');
+    const resultadoGuardado = await guardarResultado(nota, puntosGanados);
+    console.log('[Play] Resultado guardado:', resultadoGuardado);
     // Después de guardar, esperamos medio segundo y cargamos el ranking
     // de la sesión para mostrarlo en el podio.
     setTimeout(() => cargarTopResultados(), 500);

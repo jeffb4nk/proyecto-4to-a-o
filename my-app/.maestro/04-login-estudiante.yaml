@@ -1,0 +1,16 @@
+appId: com.quizima.app
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Iniciar Sesión"
+- tapOn: "Estudiante"
+- tapOn: "Email"
+- inputText: "test_estudiante@quizima.com"
+- tapOn: "Contraseña"
+- inputText: "Test1234!"
+- tapOn: "Iniciar Sesión"
+- assertVisible: "Inicio"
+- assertVisible: "QUIZIMA"
+- assertVisible: "Quices"
+- assertVisible: "Unirse"
+- assertVisible: "Logros"

@@ -1,0 +1,30 @@
+appId: com.quizima.app
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Iniciar Sesión"
+- tapOn: "Administrador"
+- assertVisible: "El administrador debe iniciar sesión con credenciales maestras"
+- tapOn: "Email"
+- inputText: "admin@master.com"
+- tapOn: "Contraseña"
+- inputText: "Master123!"
+- tapOn: "Iniciar Sesión"
+- assertVisible: "Modos de Testing"
+- assertVisible: "QUIZIMA"
+- assertVisible: "Modo Profesor"
+- assertVisible: "Modo Estudiante"
+- assertVisible: "Usuarios"
+- assertVisible: "Auditoría"
+- assertVisible: "Materias"
+- tapOn: "Perfil"
+- assertVisible: "Administrador"
+- assertVisible: "Master"
+- assertVisible: "admin@master.com"
+- scroll:
+    direction: DOWN
+- tapOn: "Cerrar Sesión"
+- assertVisible: "¿Estás seguro que deseas cerrar sesión?"
+- tapOn: "Cerrar Sesión"
+- assertVisible: "Iniciar Sesión"
+- assertVisible: "Selecciona tu rol"

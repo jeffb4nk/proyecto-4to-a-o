@@ -282,6 +282,7 @@ async def sincronizar_resultado_offline(
     Valida el token de descarga, verifica la ventana de 24h,
     y guarda el resultado con la regla de 'primera nota permanente'.
     """
+    print(f"[SYNC] 🔄 Sincronizando resultado offline. token_descarga={data.token_descarga[:20]}...")
     # La ventana de 24h existe para evitar que alguien descargue un
     # quiz, lo resuelva con calma en una semana y suba el resultado
     # como si lo hubiera hecho en vivo. El token de descarga prueba
@@ -289,15 +290,19 @@ async def sincronizar_resultado_offline(
     try:
         payload = jwt.decode(data.token_descarga, CLAVE_SECRETA, algorithms=[ALGORITMO])
     except jwt.ExpiredSignatureError:
+        print(f"[SYNC] ❌ 400: Token de descarga expirado")
         raise HTTPException(status_code=400, detail="El token de descarga ha expirado")
     except Exception:
+        print(f"[SYNC] ❌ 400: Token de descarga inválido")
         raise HTTPException(status_code=400, detail="Token de descarga inválido")
-    
-    if payload.get("propósito") != "descarga_offline":
-        raise HTTPException(status_code=400, detail="Token inválido para esta operación")
     
     sesion_id = int(payload["sub"])
     usuario_id_offline = payload.get("usuario_id")
+    print(f"[SYNC] Token decodificado: sesion_id={sesion_id}, usuario_id={usuario_id_offline}")
+
+    if payload.get("propósito") != "descarga_offline":
+        print(f"[SYNC] ❌ 400: Token no es para descarga_offline")
+        raise HTTPException(status_code=400, detail="Token inválido para esta operación")
     
     # 2. Obtener la sesión
     sesion = db.query(modelos.SesionQuiz).filter(
@@ -306,6 +311,7 @@ async def sincronizar_resultado_offline(
     ).first()
     
     if not sesion:
+        print(f"[SYNC] ❌ 404: Sesión {sesion_id} no encontrada")
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     
     # 3. Verificar que no tenga resultado ya registrado (primera nota permanente)
@@ -319,6 +325,7 @@ async def sincronizar_resultado_offline(
     # la que cuenta es la primera. Esto evita que el estudiante
     # borre la app, la reinstale y vuelva a subir el mismo quiz.
     if resultado_existente and resultado_existente.res_hora_final_real is not None:
+        print(f"[SYNC] 🔄 400: Ya existe resultado para sesión {sesion_id}, usuario {usuario_id_offline}")
         raise HTTPException(
             status_code=400,
             detail="Ya tienes un resultado registrado para esta sesión. La primera nota es permanente."
@@ -330,6 +337,7 @@ async def sincronizar_resultado_offline(
     limite_sincronizacion = fecha_fin_sesion + timedelta(hours=24)
     
     if ahora > limite_sincronizacion:
+        print(f"[SYNC] ❌ 400: Excedió ventana 24h. ahora={ahora}, limite={limite_sincronizacion}")
         raise HTTPException(
             status_code=400,
             detail="Excedió la ventana de 24 horas para sincronizar el resultado"
@@ -350,6 +358,7 @@ async def sincronizar_resultado_offline(
     # "termino" en menos, probablemente esta manipulando el reloj
     # del dispositivo o enviando datos falsos.
     if data.tiempo_total_ms < 5000:
+        print(f"[SYNC] ❌ 400: Tiempo total sospechoso: {data.tiempo_total_ms}ms")
         raise HTTPException(
             status_code=400,
             detail="Tiempo total sospechosamente bajo. No se puede sincronizar."
@@ -370,6 +379,7 @@ async def sincronizar_resultado_offline(
     ).first()
     
     if not usuario:
+        print(f"[SYNC] ❌ 404: Usuario {usuario_id_offline} no encontrado")
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     # 9. El resultado_existente existe pero sin hora_final_real, que significa
@@ -390,6 +400,7 @@ async def sincronizar_resultado_offline(
         
         usuario.usu_puntos_app = (usuario.usu_puntos_app or 0) + data.puntos_ganados
         db.commit()
+        print(f"[SYNC] ✅ Resultado actualizado para sesión {sesion_id}, usuario {usuario_id_offline}")
         
         await registrar_auditoria_sesion_fin(
             sesion_id=sesion.ses_id,
@@ -436,6 +447,7 @@ async def sincronizar_resultado_offline(
         usuario.usu_puntos_app = (usuario.usu_puntos_app or 0) + data.puntos_ganados
         db.commit()
         db.refresh(nuevo)
+        print(f"[SYNC] ✅ Nuevo resultado creado para sesión {sesion_id}, usuario {usuario_id_offline}")
         
         await registrar_auditoria_sesion_fin(
             sesion_id=sesion.ses_id,
@@ -2531,6 +2543,8 @@ async def desactivar_sesion(
             datos_nuevos=datos_nuevos,
             quiz_titulo=quiz_titulo_sesion,
             codigo_acceso=sesion.ses_codigo_acceso,
+            quiz_id=sesion.ses_id_mongo_quiz,
+            materia_id=sesion.ses_fk_materia,
             ip_address=request.client.host if request else None,
             user_agent=request.headers.get("user-agent") if request else None
         )
@@ -2637,6 +2651,8 @@ async def actualizar_puntuacion_sesion(
             datos_nuevos=datos_nuevos,
             quiz_titulo=quiz_titulo_sesion,
             codigo_acceso=sesion.ses_codigo_acceso,
+            quiz_id=sesion.ses_id_mongo_quiz,
+            materia_id=sesion.ses_fk_materia,
             ip_address=request.client.host if request else None,
             user_agent=request.headers.get("user-agent") if request else None
         )

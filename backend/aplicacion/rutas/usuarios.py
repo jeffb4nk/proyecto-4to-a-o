@@ -45,8 +45,14 @@ def listar_usuarios(bd: Session = Depends(get_db)):
 # Cualquier usuario logueado puede ver su propia info o la de otros
 # Lo usa el perfil para mostrar los datos del usuario
 @router.get("/{usuario_id}", response_model=UsuarioRespuesta, dependencies=[Depends(validar_roles([1, 2, 3]))])
-def obtener_usuario(usuario_id: int, bd: Session = Depends(get_db)):
-    """Obtiene un usuario específico por ID"""
+def obtener_usuario(usuario_id: int, bd: Session = Depends(get_db), usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Obtiene un usuario especifico por ID. 
+    Solo admins (rol 3) pueden ver otros usuarios. Los demas solo se ven a si mismos."""
+    
+    # Validar que el usuario del JWT coincide con el usuario solicitado (a menos que sea admin)
+    if usuario_actual["rol_id"] != 3 and usuario_actual["user_id"] != usuario_id:
+        raise HTTPException(status_code=403, detail="No puedes ver datos de otro usuario")
+    
     resultado = bd.execute(select(Usuario).where(Usuario.usu_id == usuario_id))
     usuario = resultado.scalar_one_or_none()
     

@@ -39,6 +39,21 @@ const getApiBaseUrl = () => {
 export const API_URL = getApiBaseUrl();
 const API_BASE_URL = API_URL;
 
+// Cache en memoria de las credenciales para reautenticar().
+// Evita depender de SecureStore en el momento exacto de la llamada,
+// que puede fallar si la app volvio de segundo plano recientemente.
+let cachedCredentials: { email: string; password: string } | null = null;
+
+// Se llama desde el login para guardar credenciales en cache.
+export function cacheCredentials(email: string, password: string) {
+    cachedCredentials = { email, password };
+}
+
+// Limpia el cache (al cerrar sesion).
+export function clearCredentialsCache() {
+    cachedCredentials = null;
+}
+
 // OFFLINE_MODE no es un error de verdad, es el comportamiento esperado
 // cuando no hay internet. Lo silenciamos para no llenar la consola
 // de mensajes que confundan al programador (o al usuario).
@@ -68,25 +83,76 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 
 
 // Intenta renovar el token automaticamente con las credenciales guardadas.
-// Si funciona, guarda el nuevo token y retorna true.
-// Si falla (credenciales cambiadas, usuario eliminado, etc), retorna false.
-export async function reautenticar(): Promise<boolean> {
+// Retorna:
+//   true    → token renovado exitosamente
+//   false   → credenciales invalidas (el token debe eliminarse)
+//   'network_error' → no hay conexion (el token se conserva para reintentar despues)
+// Primero usa el cache en memoria, y si no esta, cae a SecureStore.
+export async function reautenticar(): Promise<boolean | 'network_error'> {
   try {
-    const email = await getItem('email');
-    const password = await getItem('password');
+    let email = cachedCredentials?.email ?? null;
+    let password = cachedCredentials?.password ?? null;
+
+    // Fallback a SecureStore si el cache esta vacio
+    if (!email || !password) {
+      email = await getItem('email');
+      password = await getItem('password');
+      // Si encontramos en SecureStore, actualizar el cache
+      if (email && password) {
+        cachedCredentials = { email, password };
+      }
+    }
+
     if (!email || !password) return false;
 
+    // Obtener el usuario actual para verificar que el nuevo token pertenece al mismo usuario
+    let currentUserId: number | null = null;
+    try {
+      const userJson = await getItem('user');
+      if (userJson) {
+        const userData = JSON.parse(userJson);
+        currentUserId = userData.usu_id;
+      }
+    } catch {}
+
+    const authController = new AbortController();
+    const authTimeout = setTimeout(() => authController.abort(), 10000);
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
+      signal: authController.signal,
     });
+    clearTimeout(authTimeout);
 
     if (!response.ok) return false;
     const data = await response.json();
-    await setItem('token', data.token_acceso);
+    const newToken = data.token_acceso;
+
+    // Verificar que el nuevo token pertenece al mismo usuario que esta logueado.
+    // Si no coincide, NO guardar el token (alguien mas se logueo en el mismo dispositivo).
+    if (currentUserId !== null && newToken) {
+      try {
+        const payload = JSON.parse(atob(newToken.split('.')[1]));
+        const tokenUserId = payload.sub || payload.user_id || payload.usuario_id;
+        if (tokenUserId && Number(tokenUserId) !== currentUserId) {
+          console.warn(`[reautenticar] Token pertenece a usuario ${tokenUserId}, esperaba ${currentUserId}. Rechazando token.`);
+          return false;
+        }
+      } catch {}
+    }
+
+    await setItem('token', newToken);
     return true;
-  } catch {
+  } catch (e: any) {
+    // Solo atrapar errores de red reales de React Native.
+    // "Network request failed" es el error nativo cuando no hay conexion.
+    // TypeError con nombre "TypeError" es cuando fetch falla por red.
+    // NO atrapar errores que contengan "fetch" o "network" genericamente
+    // porque esos pueden ser errores de validacion o parsing.
+    if (e?.name === 'AbortError' || e?.message === 'Network request failed') {
+      return 'network_error';
+    }
     return false;
   }
 }
@@ -107,7 +173,28 @@ async function safeFetch(url: string, options: RequestInit = {}) {
             text: async () => 'No hay conexión a internet',
         } as Response;
     }
-    return fetch(url, options);
+    // Agregar timeout de 15 segundos para evitar que fetch se cuelgue
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const fetchOptions: RequestInit = { ...options, signal: controller.signal };
+    try {
+        const response = await fetch(url, fetchOptions);
+        clearTimeout(timeoutId);
+        return response;
+    } catch (e: any) {
+        clearTimeout(timeoutId);
+        if (e?.name === 'AbortError') {
+            return {
+                ok: false,
+                status: 0,
+                isOffline: true,
+                headers: new Headers(),
+                json: async () => ({ detail: 'Tiempo de espera agotado' }),
+                text: async () => 'Tiempo de espera agotado',
+            } as Response;
+        }
+        throw e;
+    }
 }
 
 // Cada respuesta del backend pasa por aca para centralizar el manejo
@@ -127,9 +214,11 @@ async function handleResponse(response: Response) {
             // nueva clave secreta. Si funciona, la proxima llamada usara
             // el token fresco y el usuario ni se entera.
             const renovado = await reautenticar();
-            if (renovado) {
+            if (renovado === true) {
                 throw new Error('OFFLINE_MODE');
             }
+            // Si es 'network_error', no hacer nada — el token se conserva
+            // y la proxima llamada lo reintentara con el token actual.
             // No se pudo renovar: verificar si el token expiro de verdad
             const token = await getToken();
             if (token) {
@@ -138,12 +227,13 @@ async function handleResponse(response: Response) {
                     const exp = payload.exp * 1000;
                     if (Date.now() >= exp) {
                         await deleteItem('token');
-                        // NO borramos 'user' — el usuario sigue en la app
-                        // con datos cacheados. Solo se le pide login al
-                        // intentar algo que requiera auth nuevo.
                         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
                     }
-                } catch {
+                } catch (e: any) {
+                    // Re-lanzar si es nuestro throw explícito de sesión expirada
+                    if (e?.message?.includes('Sesión expirada')) {
+                        throw e;
+                    }
                     // Token inválido o no decodificable — no cerrar sesión abruptamente
                 }
                 throw new Error('Error de autenticación temporal. Intenta nuevamente.');

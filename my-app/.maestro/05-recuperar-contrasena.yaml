@@ -1,0 +1,46 @@
+appId: com.quizima.app
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Iniciar Sesión"
+- tapOn: "¿Olvidaste tu contraseña?"
+- assertVisible: "Recuperar Contraseña"
+- tapOn: "Continuar"
+- assertVisible: "Ingresa tu correo electrónico"
+- tapOn: "Correo electrónico"
+- inputText: "noexiste@test.com"
+- tapOn: "Continuar"
+- extendedWaitUntil:
+    visible: "Si el correo existe"
+    timeout: 10000
+- tapOn: "Entendido"
+- assertVisible: "Recuperar Contraseña"
+- tapOn: "Correo electrónico"
+- eraseText
+- inputText: "test_estudiante@quizima.com"
+- tapOn: "Continuar"
+- assertVisible: "Verifica tu Identidad"
+- assertVisible: "Responde las siguientes preguntas"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Firulais"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Caracas"
+- tapOn:
+    text: "Tu respuesta..."
+    index: 0
+- inputText: "Azul"
+- tapOn: "Verificar Respuestas"
+- assertVisible: "Nueva Contraseña"
+- tapOn: "Nueva contraseña"
+- inputText: "Test1234!"
+- tapOn: "Confirmar contraseña"
+- inputText: "Test1234!"
+- tapOn: "Cambiar Contraseña"
+- assertVisible: "¡Éxito!"
+- assertVisible: "Tu contraseña ha sido actualizada correctamente"
+- tapOn: "Ir al Login"
+- assertVisible: "Iniciar Sesión"

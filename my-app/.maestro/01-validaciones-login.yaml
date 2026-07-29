@@ -1,0 +1,74 @@
+appId: com.quizima.app
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Iniciar Sesión"
+- assertVisible: "Selecciona tu rol"
+- assertVisible: "Estudiante"
+- assertVisible: "Profesor"
+- assertVisible: "Administrador"
+- assertVisible: "Email"
+- assertVisible: "Contraseña"
+- assertVisible: "¿Olvidaste tu contraseña?"
+- assertVisible: "¿No tienes cuenta? Registrarse"
+- tapOn:
+    text: "Iniciar Sesión"
+    index: 1
+- assertVisible: "Por favor ingresa tu email y contraseña"
+- tapOn:
+    text: "Email"
+- inputText: "correo-invalido"
+- tapOn:
+    point: "50%, 2%"
+- tapOn:
+    text: "Iniciar Sesión"
+    index: 1
+- assertVisible: "Por favor ingresa tu email y contraseña"
+- tapOn:
+    text: "Email"
+- eraseText
+- inputText: "valido@test.com"
+- tapOn:
+    text: "Contraseña"
+- inputText: "x"
+- tapOn:
+    text: "Email"
+- eraseText
+- inputText: "invalido"
+- tapOn:
+    point: "50%, 2%"
+- tapOn:
+    text: "Iniciar Sesión"
+    index: 1
+- assertVisible: "Ingresa un correo electrónico válido"
+- tapOn:
+    text: "Email"
+- eraseText
+- inputText: "nadie@noexiste.com"
+- tapOn:
+    text: "Contraseña"
+- eraseText
+- inputText: "WrongPass1!"
+- tapOn:
+    point: "50%, 2%"
+- tapOn:
+    text: "Iniciar Sesión"
+    index: 1
+- assertVisible: "Credenciales incorrectas"
+- tapOn:
+    text: "Email"
+- eraseText
+- inputText: "admin@master.com"
+- tapOn:
+    text: "Contraseña"
+- eraseText
+- inputText: "Master123!"
+- tapOn:
+    point: "50%, 2%"
+- tapOn:
+    text: "Iniciar Sesión"
+    index: 1
+- assertVisible: "no corresponden a un estudiante"
+- tapOn:
+    text: "Administrador"
+- assertVisible: "El administrador debe iniciar sesión con credenciales maestras"

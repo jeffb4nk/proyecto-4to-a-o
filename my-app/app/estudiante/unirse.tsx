@@ -64,8 +64,10 @@ export default function UnirseSesionScreen() {
 
     try {
       setCargando(true);
+      console.log('[Unirse] Iniciando unirseSesion...');
       const deviceId = await getDeviceId();
       const resultado = await unirseSesion(codigoAcceso.toUpperCase(), usuario.usu_id, deviceId);
+      console.log('[Unirse] unirseSesion completado:', resultado?.status);
 
       // El backend nos dice si la sesion aun no empieza (agendada).
       // En ese caso la descargamos para tenerla lista cuando llegue la hora.
@@ -75,6 +77,8 @@ export default function UnirseSesionScreen() {
         setDescargaOffline(false);
         try {
           const headers = await getAuthHeaders();
+          const dlController1 = new AbortController();
+          const dlTimeout1 = setTimeout(() => dlController1.abort(), 15000);
           let response = await fetch(`${API_URL}/sesiones/descarga-offline`, {
             method: 'POST',
             headers: {
@@ -82,13 +86,17 @@ export default function UnirseSesionScreen() {
               ...headers,
             },
             body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+            signal: dlController1.signal,
           });
+          clearTimeout(dlTimeout1);
 
           // Si el token falló, reintentar con token nuevo
           if (response.status === 401) {
             const renovado = await reautenticar();
             if (renovado) {
               const newHeaders = await getAuthHeaders();
+              const dlController2 = new AbortController();
+              const dlTimeout2 = setTimeout(() => dlController2.abort(), 15000);
               response = await fetch(`${API_URL}/sesiones/descarga-offline`, {
                 method: 'POST',
                 headers: {
@@ -96,7 +104,9 @@ export default function UnirseSesionScreen() {
                   ...newHeaders,
                 },
                 body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+                signal: dlController2.signal,
               });
+              clearTimeout(dlTimeout2);
             }
           }
 
@@ -154,6 +164,8 @@ export default function UnirseSesionScreen() {
       if (!resultado.ya_completado) {
         try {
           const headers = await getAuthHeaders();
+          const dlController3 = new AbortController();
+          const dlTimeout3 = setTimeout(() => dlController3.abort(), 15000);
           let downloadResponse = await fetch(`${API_URL}/sesiones/descarga-offline`, {
             method: 'POST',
             headers: {
@@ -161,13 +173,17 @@ export default function UnirseSesionScreen() {
               ...headers,
             },
             body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+            signal: dlController3.signal,
           });
+          clearTimeout(dlTimeout3);
 
           // Si el token falló, reintentar con token nuevo
           if (downloadResponse.status === 401) {
             const renovado = await reautenticar();
             if (renovado) {
               const newHeaders = await getAuthHeaders();
+              const dlController4 = new AbortController();
+              const dlTimeout4 = setTimeout(() => dlController4.abort(), 15000);
               downloadResponse = await fetch(`${API_URL}/sesiones/descarga-offline`, {
                 method: 'POST',
                 headers: {
@@ -175,7 +191,9 @@ export default function UnirseSesionScreen() {
                   ...newHeaders,
                 },
                 body: JSON.stringify({ codigo_acceso: codigoAcceso.toUpperCase() }),
+                signal: dlController4.signal,
               });
+              clearTimeout(dlTimeout4);
             }
           }
 
