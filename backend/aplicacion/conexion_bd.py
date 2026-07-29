@@ -1,4 +1,15 @@
 import os
+from datetime import datetime, timezone, timedelta
+
+# Venezuela está en UTC-4. El servidor de Railway usa UTC,
+# así que necesitamos ajustar para que las fechas coincidan
+# con la hora local de los usuarios.
+TZ_LOCAL = timezone(timedelta(hours=-4))
+
+def ahora_local():
+    """Retorna la hora actual en zona horaria de Venezuela (UTC-4) sin info de timezone."""
+    return datetime.now(TZ_LOCAL).replace(tzinfo=None)
+
 import motor.motor_asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base

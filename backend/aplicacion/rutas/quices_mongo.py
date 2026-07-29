@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from aplicacion.conexion_bd import coleccion_quices, coleccion_auditoria, get_db
+from aplicacion.conexion_bd import coleccion_quices, coleccion_auditoria, get_db, ahora_local
 from aplicacion.esquemas_quiz import QuizCrear, QuizRespuesta
 from aplicacion import modelos
 from aplicacion.modelos import Usuario, SesionQuiz, Resultado
@@ -460,7 +460,7 @@ async def eliminar_quiz(quiz_id: str, bd: Session = Depends(get_db), usuario: di
                 .where(SesionQuiz.ses_id.in_(sesion_ids))
                 .values(
                     ses_eliminado=True,
-                    ses_fecha_eliminacion=datetime.now(),
+                    ses_fecha_eliminacion=ahora_local(),
                     ses_eliminado_por=usuario['user_id'],
                     ses_activo=False,
                     ses_estatus="Eliminado"

@@ -5,7 +5,7 @@ from bson import ObjectId
 import asyncio
 import logging
 from datetime import datetime
-from aplicacion.conexion_bd import get_db, coleccion_quices
+from aplicacion.conexion_bd import get_db, coleccion_quices, ahora_local
 from aplicacion.modelos import Usuario, Rol, Resultado, SesionQuiz, Materia, LogroUsuario
 from aplicacion.esquemas import UsuarioRespuesta
 from aplicacion.dependencias import validar_roles, obtener_usuario_actual
@@ -232,9 +232,8 @@ async def eliminar_usuario(usuario_id: int, bd: Session = Depends(get_db), usuar
                 detail="No se puede eliminar al único Master del sistema"
             )
     
-    from datetime import datetime
     usuario.usu_eliminado = True
-    usuario.usu_fecha_eliminacion = datetime.now()
+    usuario.usu_fecha_eliminacion = ahora_local()
     
     if usuario_actual:
         usuario.usu_eliminado_por = usuario_actual["user_id"]

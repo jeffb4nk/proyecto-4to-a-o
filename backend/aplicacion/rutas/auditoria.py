@@ -18,7 +18,7 @@ import traceback
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from aplicacion.conexion_bd import get_db, coleccion_quices, coleccion_auditoria
+from aplicacion.conexion_bd import get_db, coleccion_quices, coleccion_auditoria, ahora_local
 from aplicacion.modelos import Usuario, Materia, SesionQuiz, Resultado, Rol, Inscripcion
 from aplicacion.dependencias import validar_roles
 

@@ -16,7 +16,7 @@ from jose import jwt
 # La coleccion_quices de MongoDB solo se consulta para obtener el contenido
 # del quiz que ya se creo antes.
 
-from aplicacion.conexion_bd import get_db, coleccion_quices
+from aplicacion.conexion_bd import get_db, coleccion_quices, ahora_local
 from aplicacion import modelos
 from aplicacion.servicio_auditoria import (
     registrar_auditoria_sesion_inicio,
@@ -194,7 +194,7 @@ async def descargar_quiz_offline(
         )
     
     # 3. Verificar que no haya expirado
-    ahora = datetime.now()
+    ahora = ahora_local()
     if sesion.ses_fecha_fin < ahora:
         raise HTTPException(
             status_code=400,
@@ -332,7 +332,7 @@ async def sincronizar_resultado_offline(
         )
     
     # 4. Validar ventana de 24 horas
-    ahora = datetime.now()
+    ahora = ahora_local()
     fecha_fin_sesion = sesion.ses_fecha_fin
     limite_sincronizacion = fecha_fin_sesion + timedelta(hours=24)
     
@@ -511,8 +511,8 @@ async def crear_sesion(id_quiz_mongo: str, id_materia: int, id_profesor: int = 0
         ses_id_mongo_quiz=id_quiz_mongo,
         ses_fk_materia=id_materia,        ses_puntuacion_tipo='Igual',        ses_fk_profesor=id_profesor,
         ses_estatus="Activo",
-        ses_fecha_inicio=datetime.now(),
-        ses_fecha_fin=datetime.now(),
+        ses_fecha_inicio=ahora_local(),
+        ses_fecha_fin=ahora_local(),
         ses_activo=True
     )
 
@@ -606,7 +606,7 @@ async def crear_sesion_asignada(data: SesionAsignadaCrear, request: Request, db:
     # 5. Si es agendado, la fecha de inicio debe ser futura.
     # No permitimos fechas pasadas porque romperia el flujo
     # de "el quiz se habilita automaticamente a las X horas".
-    ahora = datetime.now()
+    ahora = ahora_local()
     if data.tipo_publicacion == 'inmediato':
         fecha_inicio = ahora
     else:
@@ -803,7 +803,7 @@ async def unirse_sesion(data: UnirseSesion, request: Request, db: Session = Depe
         )
     
     # 2. Validar que la sesión no haya expirado
-    if sesion.ses_fecha_fin < datetime.now():
+    if sesion.ses_fecha_fin < ahora_local():
         raise HTTPException(
             status_code=400, 
             detail="Esta sesión ha expirado"
@@ -816,13 +816,13 @@ async def unirse_sesion(data: UnirseSesion, request: Request, db: Session = Depe
     ).first()
     
     # 2b. Validar si es sesión agendada con inicio futuro
-    if sesion.ses_fecha_inicio > datetime.now():
+    if sesion.ses_fecha_inicio > ahora_local():
         if not resultado_existente:
             # Primera vez que se une a esta sesión agendada
             nuevo_resultado = modelos.Resultado(
                 res_fk_usuario=data.id_usuario,
                 res_fk_sesion=sesion.ses_id,
-                res_hora_inicio_real=datetime.now(),
+                res_hora_inicio_real=ahora_local(),
                 res_hora_final_real=None,
                 res_nota_final=0,
                 res_puntos_ganados_app=0,
@@ -914,8 +914,8 @@ async def unirse_sesion(data: UnirseSesion, request: Request, db: Session = Depe
     quiz_serializable["_id"] = str(quiz["_id"])
     
     # 4b. Si el resultado existe pero es pendiente (hora_inicio is None) y ya es la hora
-    if resultado_existente and resultado_existente.res_hora_inicio_real is None and sesion.ses_fecha_inicio <= datetime.now():
-        resultado_existente.res_hora_inicio_real = datetime.now()
+    if resultado_existente and resultado_existente.res_hora_inicio_real is None and sesion.ses_fecha_inicio <= ahora_local():
+        resultado_existente.res_hora_inicio_real = ahora_local()
         db.commit()
         # Ahora resultado_existente tiene hora_inicio, el flujo continúa normal
     
@@ -943,7 +943,7 @@ async def unirse_sesion(data: UnirseSesion, request: Request, db: Session = Depe
         nuevo_resultado = modelos.Resultado(
             res_fk_usuario=data.id_usuario,
             res_fk_sesion=sesion.ses_id,
-            res_hora_inicio_real=datetime.now(),
+            res_hora_inicio_real=ahora_local(),
             res_hora_final_real=None,
             res_nota_final=0,
             res_puntos_ganados_app=0,
@@ -959,7 +959,7 @@ async def unirse_sesion(data: UnirseSesion, request: Request, db: Session = Depe
         db.commit()
     elif resultado_existente and resultado_existente.res_hora_final_real is None:
         # Re-join: el estudiante inició pero no completó, actualizar hora_inicio para tracking en vivo
-        resultado_existente.res_hora_inicio_real = datetime.now()
+        resultado_existente.res_hora_inicio_real = ahora_local()
         db.commit()
     
     response = {
@@ -1030,7 +1030,7 @@ async def guardar_resultado(data: ResultadoSesion, request: Request, db: Session
         if resultado_existente and resultado_existente.res_hora_final_real is not None:
             # CASO A: REPETICIÓN — ya completó antes
             resultado_existente.res_repeticiones = (resultado_existente.res_repeticiones or 0) + 1
-            resultado_existente.res_fecha_ultima_repeticion = datetime.now()
+            resultado_existente.res_fecha_ultima_repeticion = ahora_local()
             
             if resultado_existente.res_nota_primera_vez is None:
                 resultado_existente.res_nota_primera_vez = resultado_existente.res_nota_final
@@ -1079,8 +1079,8 @@ async def guardar_resultado(data: ResultadoSesion, request: Request, db: Session
                 except (ValueError, TypeError):
                     return None
             
-            hora_inicio = parsear_fecha(data.hora_inicio_local) or resultado_existente.res_hora_inicio_real or datetime.now()
-            hora_fin = parsear_fecha(data.finalizado_en_local) or datetime.now()
+            hora_inicio = parsear_fecha(data.hora_inicio_local) or resultado_existente.res_hora_inicio_real or ahora_local()
+            hora_fin = parsear_fecha(data.finalizado_en_local) or ahora_local()
             
             # Detectamos resultados sospechosos: nota 0, tiempo menor a
             # 1 segundo y sin informe de fallas. No lo rechazamos porque
@@ -1103,7 +1103,7 @@ async def guardar_resultado(data: ResultadoSesion, request: Request, db: Session
             # aunque el estudiante repita el quiz despues.
             resultado_existente.res_nota_primera_vez = data.nota_final
             resultado_existente.res_repeticiones = 0
-            resultado_existente.res_fecha_primera_vez = datetime.now()
+            resultado_existente.res_fecha_primera_vez = ahora_local()
             
             # Los puntos de la app se suman solo en la primera
             # realizacion. En repeticiones no se suman puntos
@@ -1159,8 +1159,8 @@ async def guardar_resultado(data: ResultadoSesion, request: Request, db: Session
                 except (ValueError, TypeError):
                     return None
             
-            hora_inicio = parsear_fecha(data.hora_inicio_local) or datetime.now()
-            hora_fin = parsear_fecha(data.finalizado_en_local) or datetime.now()
+            hora_inicio = parsear_fecha(data.hora_inicio_local) or ahora_local()
+            hora_fin = parsear_fecha(data.finalizado_en_local) or ahora_local()
             
             nuevo_resultado = modelos.Resultado(
                 res_fk_usuario=data.id_usuario,
@@ -1174,7 +1174,7 @@ async def guardar_resultado(data: ResultadoSesion, request: Request, db: Session
                 res_finalizado_offline=data.es_offline,
                 res_nota_primera_vez=data.nota_final,
                 res_repeticiones=0,
-                res_fecha_primera_vez=datetime.now(),
+                res_fecha_primera_vez=ahora_local(),
                 res_device_id=device_id
             )
             
@@ -1769,7 +1769,7 @@ async def obtener_sesiones_disponibles(usuario_id: int, db: Session = Depends(ge
             return {"status": "success", "sesiones": []}
 
         # Obtener sesiones activas en esas materias (que no sean del estudiante)
-        ahora = datetime.now()
+        ahora = ahora_local()
         sesiones = db.query(
             modelos.SesionQuiz, modelos.Materia, modelos.Usuario
         ).join(
@@ -1839,13 +1839,13 @@ async def listar_sesiones_profesor(
                 query = query.filter(
                     modelos.SesionQuiz.ses_eliminado == False,
                     modelos.SesionQuiz.ses_activo == True,
-                    modelos.SesionQuiz.ses_fecha_inicio <= datetime.now(),
-                    modelos.SesionQuiz.ses_fecha_fin > datetime.now()
+                    modelos.SesionQuiz.ses_fecha_inicio <= ahora_local(),
+                    modelos.SesionQuiz.ses_fecha_fin > ahora_local()
                 )
             elif estatus == "Expirado":
                 query = query.filter(
                     modelos.SesionQuiz.ses_eliminado == False,
-                    modelos.SesionQuiz.ses_fecha_fin <= datetime.now(),
+                    modelos.SesionQuiz.ses_fecha_fin <= ahora_local(),
                     modelos.SesionQuiz.ses_activo == True
                 )
             elif estatus == "Finalizado":
@@ -1908,8 +1908,8 @@ async def listar_sesiones_profesor(
                 ses_eliminado=sesion.ses_eliminado or False,
                 ses_estado_display="Eliminado" if sesion.ses_eliminado else (
                     "Inactivo" if not sesion.ses_activo else (
-                        "Agendado" if sesion.ses_fecha_inicio > datetime.now() else (
-                            "Expirado" if sesion.ses_fecha_fin < datetime.now() else "Activo"
+                        "Agendado" if sesion.ses_fecha_inicio > ahora_local() else (
+                            "Expirado" if sesion.ses_fecha_fin < ahora_local() else "Activo"
                         )
                     )
                 )
@@ -1983,9 +1983,9 @@ async def listar_sesiones_para_reportes(
                 estado_display = "Eliminado"
             elif not sesion.ses_activo:
                 estado_display = "Inactivo"
-            elif sesion.ses_fecha_inicio > datetime.now():
+            elif sesion.ses_fecha_inicio > ahora_local():
                 estado_display = "Agendado"
-            elif sesion.ses_fecha_fin < datetime.now():
+            elif sesion.ses_fecha_fin < ahora_local():
                 estado_display = "Expirado"
             else:
                 estado_display = "Activo"
@@ -2415,7 +2415,7 @@ async def obtener_resultados_tiempo_real(
             # Calcular tiempo transcurrido si está en curso
             tiempo_transcurrido_ms = 0
             if en_curso and res.res_hora_inicio_real:
-                tiempo_transcurrido_ms = int((datetime.now() - res.res_hora_inicio_real).total_seconds() * 1000)
+                tiempo_transcurrido_ms = int((ahora_local() - res.res_hora_inicio_real).total_seconds() * 1000)
             elif completado:
                 tiempo_transcurrido_ms = res.res_tiempo_total_ms or 0
             
@@ -2720,7 +2720,7 @@ async def eliminar_sesion(
             )
         
         # Solo permitir eliminar sesiones inactivas o expiradas
-        if sesion.ses_activo and sesion.ses_fecha_fin > datetime.now():
+        if sesion.ses_activo and sesion.ses_fecha_fin > ahora_local():
             raise HTTPException(
                 status_code=400,
                 detail="No se pueden eliminar sesiones activas. Primero desactívalas."
@@ -2750,7 +2750,7 @@ async def eliminar_sesion(
         
         # Soft delete: marcar sesion como eliminada en lugar de borrarla
         sesion.ses_eliminado = True
-        sesion.ses_fecha_eliminacion = datetime.now()
+        sesion.ses_fecha_eliminacion = ahora_local()
         sesion.ses_eliminado_por = id_profesor
         sesion.ses_activo = False
         sesion.ses_estatus = "Eliminado"

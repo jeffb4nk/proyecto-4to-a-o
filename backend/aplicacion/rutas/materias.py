@@ -6,7 +6,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 
-from aplicacion.conexion_bd import get_db, coleccion_quices
+from aplicacion.conexion_bd import get_db, coleccion_quices, ahora_local
 from aplicacion.modelos import Materia, Usuario, SesionQuiz, Inscripcion, Rol
 from aplicacion.dependencias import validar_roles, obtener_usuario_actual
 from aplicacion.servicio_auditoria import (
@@ -612,9 +612,8 @@ async def eliminar_materia(materia_id: int, request: Request, bd: Session = Depe
             raise HTTPException(status_code=404, detail="Materia no encontrada")
         
         # 2. Soft Delete: Marcar como eliminada
-        from datetime import datetime
         materia.mat_eliminado = True
-        materia.mat_fecha_eliminacion = datetime.now()
+        materia.mat_fecha_eliminacion = ahora_local()
         
         if usuario:
             materia.mat_eliminado_por = usuario["user_id"]
