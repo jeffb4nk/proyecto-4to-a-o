@@ -16,6 +16,13 @@ else:
 # --- CONFIGURACIÓN POSTGRESQL (SQLAlchemy) ---
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Supabase requires SSL connections
+if DATABASE_URL and 'supabase' in DATABASE_URL:
+    if '?' not in DATABASE_URL:
+        DATABASE_URL += '?sslmode=require'
+    elif 'sslmode' not in DATABASE_URL:
+        DATABASE_URL += '&sslmode=require'
+
 # pool_pre_ping revive conexiones caidas automaticamente
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
