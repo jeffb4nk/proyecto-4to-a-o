@@ -20,17 +20,18 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8000';
   }
 
-  // Expo detecta automaticamente la IP de la red donde estas.
-  // Funciona en celulares reales (Expo Go) porque hostUri contiene
-  // la IP del dev server, que es la misma maquina donde corre el backend.
+  // Cuando se ejecuta en Expo Go (desarrollo), hostUri tiene la IP local
+  // y el backend corre en la misma maquina.
+  // Cuando se genera como APK (produccion), hostUri no existe porque
+  // no hay dev server — en ese caso usamos el backend de la nube.
   if (Constants.expoConfig?.hostUri) {
     const host = Constants.expoConfig.hostUri.split(':')[0];
     return `http://${host}:8000`;
   }
 
-  // Solo para emulador Android (10.0.2.2 es un alias especial del emulador).
+  // APK en Android (produccion): apuntar al backend en la nube
   if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
+    return 'https://proyecto-4to-a-o-production.up.railway.app';
   }
 
   return 'http://127.0.0.1:8000';
