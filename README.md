@@ -235,6 +235,5 @@ Desarrollado por el equipo QuizIMA
 
 <div align="center">
 
-Hecho con ❤️ para la educación
 
 </div>
